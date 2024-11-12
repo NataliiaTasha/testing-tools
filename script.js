@@ -1,6 +1,3 @@
-// Імпорт Three.js (потрібно підключити бібліотеку Three.js у HTML)
-// <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
 // Основні налаштування сцени, камери та рендерера
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
@@ -38,7 +35,7 @@ const images = [
     textureLoader.load('./images/gogh.jpg'),
     textureLoader.load('./images/magritt.jpg'),
     textureLoader.load('./images/klimt.jpg'),
-    // Додайте сюди інші зображення
+    // Додайте інші зображення тут
 ];
 
 // Створюємо спрайт, який буде показувати вибране зображення
@@ -48,13 +45,23 @@ imageSprite.scale.set(1, 1, 1); // Початковий розмір
 imageSprite.visible = false; // Спочатку приховуємо
 scene.add(imageSprite);
 
+// Ініціалізація переміщень частинок (velocities)
+const velocities = new Float32Array(particleCount * 3);
+for (let i = 0; i < particleCount * 3; i++) {
+    velocities[i] = (Math.random() - 0.5) * 0.02; // Випадкова швидкість для кожної координати частинки
+}
+
 // Подія кліку на частинку
-function onMouseClick() {
+function onMouseClick(event) {
+    const mouse = new THREE.Vector2();
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObject(particleSystem);
     
     if (intersects.length > 0) {
-        // Випадкове зображення з масиву або певне за індексом
+        // Випадкове зображення з масиву
         const randomImage = images[Math.floor(Math.random() * images.length)];
         
         // Встановлюємо текстуру вибраного зображення
@@ -65,7 +72,7 @@ function onMouseClick() {
         imageSprite.position.copy(intersects[0].point);
         imageSprite.scale.set(1, 1, 1); // Початковий розмір картинки
         imageSprite.visible = true;
-        
+
         // Анімація збільшення картинки
         const animateImage = () => {
             if (imageSprite.scale.x < 3) {
@@ -77,29 +84,55 @@ function onMouseClick() {
         animateImage();
     }
 }
-window.addEventListener('click', onMouseClick);
 
-const velocities = new Float32Array(particleCount * 3);
-for (let i = 0; i < particleCount * 3; i++) {
-    velocities[i] = (Math.random() - 0.5) * 0.02; // Випадкова швидкість для кожної координати частинки
+// Подія для дотику на мобільних пристроях
+function onTouchStart(event) {
+    event.preventDefault(); // щоб запобігти скролінгу сторінки
+    const touch = event.touches[0];
+    const mouse = new THREE.Vector2();
+    mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObject(particleSystem);
+
+    if (intersects.length > 0) {
+        // Випадкове зображення з масиву
+        const randomImage = images[Math.floor(Math.random() * images.length)];
+
+        // Встановлюємо текстуру вибраного зображення
+        imageMaterial.map = randomImage;
+        imageMaterial.needsUpdate = true;
+
+        // Позиціонуємо спрайт на місці натиснутої частинки
+        imageSprite.position.copy(intersects[0].point);
+        imageSprite.scale.set(1, 1, 1); // Початковий розмір картинки
+        imageSprite.visible = true;
+
+        // Анімація збільшення картинки
+        const animateImage = () => {
+            if (imageSprite.scale.x < 3) {
+                imageSprite.scale.x += 0.05;
+                imageSprite.scale.y += 0.05;
+                requestAnimationFrame(animateImage);
+            }
+        };
+        animateImage();
+    }
 }
 
+window.addEventListener('click', onMouseClick);
+window.addEventListener('touchstart', onTouchStart);
+
 // Додаємо обробку подій для руху миші
-const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
 function onMouseMove(event) {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 window.addEventListener('mousemove', onMouseMove);
-
-// Подія для дотику на мобільних пристроях
-function onTouchMove(event) {
-    mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
-}
-window.addEventListener('touchmove', onTouchMove);
 
 // Анімація сцени
 function animate() {
@@ -110,9 +143,9 @@ function animate() {
     for (let i = 0; i < particleCount * 3; i++) {
         positions[i] += velocities[i];
 
-        // Обмеження руху частинок у певному діапазоні, щоб не вилітали занадто далеко
+        // Обмеження руху частинок у певному діапазоні
         if (positions[i] > 5 || positions[i] < -5) {
-            velocities[i] = -velocities[i]; // Міняємо напрямок, якщо частинка досягла межі
+            velocities[i] = -velocities[i];
         }
     }
     particleSystem.geometry.attributes.position.needsUpdate = true;
@@ -139,7 +172,6 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-
 // Масштабування для адаптації під розмір вікна
 window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -148,4 +180,5 @@ window.addEventListener('resize', () => {
 });
 
 animate();
+
 
