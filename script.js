@@ -51,6 +51,22 @@ for (let i = 0; i < particleCount * 3; i++) {
     velocities[i] = (Math.random() - 0.5) * 0.02; // Випадкова швидкість для кожної координати частинки
 }
 
+function getMaxScale() {
+    const maxWidth = window.innerWidth * 0.9; // 90% ширини екрану
+    const maxHeight = window.innerHeight * 0.9; // 90% висоти екрану
+
+    const imageAspectRatio = imageMaterial.map.image.width / imageMaterial.map.image.height;
+    const screenAspectRatio = maxWidth / maxHeight;
+
+    let scale = 1;
+    if (imageAspectRatio > screenAspectRatio) {
+        scale = maxWidth / imageMaterial.map.image.width;
+    } else {
+        scale = maxHeight / imageMaterial.map.image.height;
+    }
+    return scale;
+}
+
 // Подія кліку на частинку
 function onMouseClick(event) {
     const mouse = new THREE.Vector2();
@@ -75,7 +91,7 @@ function onMouseClick(event) {
 
         // Анімація збільшення картинки
         const animateImage = () => {
-            if (imageSprite.scale.x < 3) {
+            if (imageSprite.scale.x < 1) {
                 imageSprite.scale.x += 0.05;
                 imageSprite.scale.y += 0.05;
                 requestAnimationFrame(animateImage);
@@ -111,9 +127,9 @@ function onTouchStart(event) {
 
         // Анімація збільшення картинки
         const animateImage = () => {
-            if (imageSprite.scale.x < 3) {
-                imageSprite.scale.x += 0.05;
-                imageSprite.scale.y += 0.05;
+            if (imageSprite.scale.x < 0.5) {
+                imageSprite.scale.x += 0.01;
+                imageSprite.scale.y += 0.01;
                 requestAnimationFrame(animateImage);
             }
         };
